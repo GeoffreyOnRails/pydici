@@ -159,6 +159,7 @@ INSTALLED_APPS = [
     'permissions',
     'workflows',
     'django_tables2',
+    'django_filters',
 ]
 
 if DEBUG:

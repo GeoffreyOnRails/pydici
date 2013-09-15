@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 
 import django_tables2 as tables
 from django_tables2.utils import A
+import django_filters as filters
 
 from expense.models import Expense
 from core.templatetags.pydici_filters import link_to_consultant
@@ -25,3 +26,10 @@ class ExpenseTable(tables.Table):
         model = Expense
         sequence = ("user", "description", "lead", "amount", "chargeable", "receipt", "state", "expense_date", "update_date", "comment")
         fields = sequence
+
+
+class ExpenseFilter(filters.FilterSet):
+    expense_date = filters.DateRangeFilter()
+    class Meta:
+        model = Expense
+        fields = ["user", "chargeable", "expense_date"]

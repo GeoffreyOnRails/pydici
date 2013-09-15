@@ -15,5 +15,9 @@
 
 <h1>{% trans "Expenses archive" %}</h1>
 {% render_table expense_table %}
-
+<h4>{% trans 'Filters' %}</h4>
+ <form action="" method="get">
+        {{ expenses_filter.form.as_p }}
+        <input type="submit" />
+</form>
 {% endblock %}

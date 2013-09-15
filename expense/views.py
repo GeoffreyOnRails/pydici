@@ -23,7 +23,7 @@ from django.contrib import messages
 
 from expense.forms import ExpenseForm
 from expense.models import Expense
-from expense.tables import ExpenseTable
+from expense.tables import ExpenseTable, ExpenseFilter
 from people.models import Consultant
 from staffing.models import Mission
 from core.decorator import pydici_non_public
@@ -144,11 +144,13 @@ def expenses_history(request):
     if "csv" in request.GET:
         return csv_expenses(request, expenses)
 
+    expenses = ExpenseFilter(request.GET, queryset=expenses)
     expenseTable = ExpenseTable(expenses)
     RequestConfig(request, paginate={"per_page": 50}).configure(expenseTable)
 
     return render(request, "expense/expense_archive.html",
                   {"expense_table": expenseTable,
+                   "expenses_filter": expenses,
                    "user": request.user})
 
 

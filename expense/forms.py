@@ -5,18 +5,14 @@ Expense form setup
 @license: AGPL v3 or newer (http://www.gnu.org/licenses/agpl-3.0.html)
 """
 
-from datetime import datetime
-
 from django import forms
-from django.forms.models import BaseInlineFormSet
 from django.forms.widgets import TextInput, Textarea
-from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ValidationError
 
-from ajax_select.fields import AutoCompleteSelectField
+from ajax_select.fields import AutoCompleteSelectField, AutoCompleteSelectMultipleField
 
-from expense.models import Expense
+from expense.models import Expense, ExpensePayment
 
 
 class ExpenseForm(forms.ModelForm):
@@ -24,13 +20,36 @@ class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
         fields = ("description", "lead", "chargeable", "amount", "category", "receipt", "expense_date", "corporate_card", "comment")
-        widgets = {"description": TextInput(attrs={"size": 40}), # Increase default size
-                   "comment": Textarea(attrs={'cols': 17, 'rows': 2})} # Reduce height and increase width 
+        widgets = {"description": TextInput(attrs={"size": 40}),  # Increase default size
+                   "comment": Textarea(attrs={'cols': 17, 'rows': 2})}  # Reduce height and increase width
 
-    lead = AutoCompleteSelectField('lead', required=False, label=_("Lead")) # Ajax it
+    lead = AutoCompleteSelectField('lead', required=False, label=_("Lead"))  # Ajax it
 
     def clean(self):
         """Additional check on expense form"""
         if self.cleaned_data["chargeable"] and not self.cleaned_data["lead"]:
             raise forms.ValidationError(_("You must define a lead if expense is chargeable"))
         return self.cleaned_data
+
+
+class ExpensePaymentForm(forms.ModelForm):
+    """Expense payment form based on ExpensePayemnt model"""
+    expenses = AutoCompleteSelectMultipleField('payable_expense', required=True, label=_("Expenses"))  # Ajax it
+
+    def clean(self):
+        """Ensure expenses belongs to the same users"""
+        if "expenses" in self.cleaned_data:
+            user = None
+            for expense_id in self.cleaned_data["expenses"]:
+                expense = Expense.objects.get(id=expense_id)
+                if user is None:
+                    user = expense.user
+                else:
+                    if expense.user != user:
+                        raise ValidationError(_("All expenses of a payments must belongs to same users"))
+        return self.cleaned_data
+
+
+    class Meta:
+        model = ExpensePayment
+        fields = {"payment_date", "expenses"}
